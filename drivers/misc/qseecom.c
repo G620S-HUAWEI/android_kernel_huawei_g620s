@@ -176,7 +176,6 @@ struct qseecom_control {
 	struct work_struct bw_inactive_req_ws;
 	struct cdev cdev;
 	bool timer_running;
-	bool uclient_shutdown_app;
 };
 
 struct qseecom_client_handle {
@@ -1011,7 +1010,6 @@ static int qseecom_load_app(struct qseecom_dev_handle *data, void __user *argp)
 		(char *)(load_img_req.img_name));
 	}
 	data->client.app_id = app_id;
-	data->type = QSEECOM_CLIENT_APP;
 	load_img_req.app_id = app_id;
 	if (copy_to_user(argp, &load_img_req, sizeof(load_img_req))) {
 		pr_err("copy_to_user failed\n");
@@ -1057,7 +1055,7 @@ static int qseecom_unmap_ion_allocated_memory(struct qseecom_dev_handle *data)
 }
 
 static int qseecom_unload_app(struct qseecom_dev_handle *data,
-				bool uclient_release)
+				bool app_crash)
 {
 	unsigned long flags;
 	int ret = 0;
@@ -1072,8 +1070,7 @@ static int qseecom_unload_app(struct qseecom_dev_handle *data,
 									list) {
 			if (ptr_app->app_id == data->client.app_id) {
 				found_app = true;
-				if ((uclient_release) &&
-					(!qseecom.uclient_shutdown_app)) {
+				if (app_crash) {
 					ptr_app->ref_cnt = 0;
 					unload = true;
 					break;
@@ -3906,7 +3903,6 @@ static long qseecom_ioctl(struct file *file, unsigned cmd,
 		pr_debug("UNLOAD_APP: qseecom_addr = 0x%x\n", (u32)data);
 		mutex_lock(&app_access_lock);
 		atomic_inc(&data->ioctl_count);
-		qseecom.uclient_shutdown_app = true;
 		ret = qseecom_unload_app(data, false);
 		atomic_dec(&data->ioctl_count);
 		mutex_unlock(&app_access_lock);
@@ -4288,12 +4284,6 @@ static int qseecom_release(struct inode *inode, struct file *file)
 			break;
 		case QSEECOM_CLIENT_APP:
 			ret = qseecom_unload_app(data, true);
-			if (ret) {
-				pr_err("Close failed\n");
-				return ret;
-			} else {
-				qseecom.uclient_shutdown_app = false;
-			}
 			break;
 		case QSEECOM_SECURE_SERVICE:
 		case QSEECOM_GENERIC:
