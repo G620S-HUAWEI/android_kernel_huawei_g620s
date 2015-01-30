@@ -1563,7 +1563,7 @@ int mdss_mdp_ctl_setup(struct mdss_mdp_ctl *ctl)
 
 	ctl->width = width;
 	ctl->height = height;
-	ctl->roi = (struct mdss_mdp_img_rect) {0, 0, width, height};
+	ctl->roi = (struct mdss_rect) {0, 0, width, height};
 
 	if (!ctl->mixer_left) {
 		ctl->mixer_left =
@@ -2120,48 +2120,6 @@ int mdss_mdp_ctl_stop(struct mdss_mdp_ctl *ctl)
 	return ret;
 }
 
-void mdss_mdp_set_roi(struct mdss_mdp_ctl *ctl,
-		struct mdp_display_commit *data)
-{
-	struct mdss_mdp_img_rect temp_roi, mixer_roi;
-
-	temp_roi.x = data->roi.x;
-	temp_roi.y = data->roi.y;
-	temp_roi.w = data->roi.w;
-	temp_roi.h = data->roi.h;
-
-	/*
-	 * No Partial Update for:
-	 * 1) dual DSI panels
-	 * 2) non-cmd mode panels
-	*/
-	if (!temp_roi.w || !temp_roi.h || ctl->mixer_right ||
-			(ctl->panel_data->panel_info.type != MIPI_CMD_PANEL) ||
-			!ctl->panel_data->panel_info.partial_update_enabled) {
-		temp_roi = (struct mdss_mdp_img_rect)
-				{0, 0, ctl->mixer_left->width,
-					ctl->mixer_left->height};
-	}
-
-	ctl->roi_changed = 0;
-	if (((temp_roi.x != ctl->roi.x) ||
-			(temp_roi.y != ctl->roi.y)) ||
-			((temp_roi.w != ctl->roi.w) ||
-			 (temp_roi.h != ctl->roi.h))) {
-		ctl->roi = temp_roi;
-		ctl->roi_changed++;
-
-		mixer_roi = ctl->mixer_left->roi;
-		if ((mixer_roi.w != temp_roi.w) ||
-			(mixer_roi.h != temp_roi.h)) {
-			ctl->mixer_left->roi = temp_roi;
-			ctl->mixer_left->params_changed++;
-		}
-	}
-	pr_debug("ROI requested: [%d, %d, %d, %d]\n",
-			ctl->roi.x, ctl->roi.y, ctl->roi.w, ctl->roi.h);
-}
-
 /*
  * mdss_mdp_ctl_reset() - reset mdp ctl path.
  * @ctl: mdp controller.
@@ -2251,6 +2209,7 @@ void mdss_mdp_set_roi(struct mdss_mdp_ctl *ctl,
 	/* Reset ROI when we have (1) invalid ROI (2) feature disabled */
 	if ((!l_roi.w && l_roi.h) || (l_roi.w && !l_roi.h) ||
 		(!r_roi.w && r_roi.h) || (r_roi.w && !r_roi.h) ||
+		(!l_roi.w && !l_roi.h && !r_roi.w && !r_roi.h) ||
 		!ctl->panel_data->panel_info.partial_update_enabled) {
 		l_roi = (struct mdss_rect)
 		{0, 0, ctl->mixer_left->width, ctl->mixer_left->height};
@@ -2274,7 +2233,8 @@ static void mdss_mdp_mixer_setup(struct mdss_mdp_ctl *master_ctl,
 	int i;
 	int stage, screen_state, outsize;
 	u32 off, blend_op, blend_stage, mpq_num;
-	u32 mixercfg = 0, mixer_op_mode = 0, bg_alpha_enable = 0;
+	u32 mixercfg = 0, mixer_op_mode = 0, bg_alpha_enable = 0,
+	    mixercfg_extn = 0;
 	u32 fg_alpha = 0, bg_alpha = 0;
 	struct mdss_mdp_pipe *pipe;
 	struct mdss_mdp_ctl *ctl = NULL;
@@ -2320,6 +2280,9 @@ static void mdss_mdp_mixer_setup(struct mdss_mdp_ctl *master_ctl,
 			pipe->num == MDSS_MDP_SSPP_RGB3) {
 			/* Add 2 to account for Cursor & Border bits */
 			mixercfg = 1 << ((3 * pipe->num)+2);
+		} else if (pipe->type == MDSS_MDP_PIPE_TYPE_CURSOR) {
+			mixercfg_extn = BIT(20 + (6 *
+					(pipe->num - MDSS_MDP_SSPP_CURSOR0)));
 		} else {
 			mixercfg = 1 << (3 * pipe->num);
 		}
