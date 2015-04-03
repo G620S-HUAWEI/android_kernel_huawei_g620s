@@ -347,7 +347,6 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 
 	return rc;
 }
-<<<<<<< HEAD
 #ifdef CONFIG_FB_AUTO_CABC
 static int mdss_dsi_panel_cabc_ctrl(struct mdss_panel_data *pdata,struct msmfb_cabc_config cabc_cfg)
 {
@@ -377,7 +376,6 @@ static int mdss_dsi_panel_cabc_ctrl(struct mdss_panel_data *pdata,struct msmfb_c
 	return 0;
 }
 #endif
-=======
 
 /**
  * mdss_dsi_roi_merge() -  merge two roi into single roi
@@ -424,7 +422,6 @@ static int mdss_dsi_roi_merge(struct mdss_dsi_ctrl_pdata *ctrl,
 	return ans;
 }
 
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 static char caset[] = {0x2a, 0x00, 0x00, 0x03, 0x00};	/* DTYPE_DCS_LWRITE */
 static char paset[] = {0x2b, 0x00, 0x00, 0x05, 0x00};	/* DTYPE_DCS_LWRITE */
 
@@ -592,15 +589,11 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 {
 	struct mipi_panel_info *mipi;
 	struct mdss_dsi_ctrl_pdata *ctrl = NULL;
-<<<<<<< HEAD
+	struct mdss_panel_info *pinfo;
 #ifdef CONFIG_HUAWEI_LCD
 	struct dsi_panel_cmds cmds;
 #endif
 	unsigned long timeout = jiffies;
-=======
-	struct mdss_panel_info *pinfo;
-
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
@@ -619,11 +612,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 	pr_debug("%s: ctrl=%p ndx=%d\n", __func__, ctrl, ctrl->ndx);
 
-<<<<<<< HEAD
 #ifndef CONFIG_HUAWEI_LCD
-=======
-
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 	if (ctrl->on_cmds.cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
 #else
@@ -676,16 +665,13 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
-<<<<<<< HEAD
 /*set mipi status*/
 #if defined(CONFIG_HUAWEI_KERNEL) && defined(CONFIG_DEBUG_FS)
 	atomic_set(&mipi_path_status,MIPI_PATH_CLOSE);
 #endif
-=======
 
 	pinfo = &pdata->panel_info;
 
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
 
@@ -1309,7 +1295,6 @@ static int mdss_dsi_parse_panel_features(struct device_node *np,
 	return 0;
 }
 
-<<<<<<< HEAD
 /***************************************************************
 Function: mdss_paned_parse_esd_dt
 Description: parse the esd concerned setting
@@ -1349,7 +1334,7 @@ static void mdss_panel_parse_esd_dt(struct device_node *np,
 	}
 }
 #endif
-=======
+
 static void mdss_dsi_parse_panel_horizintal_line_idle(struct device_node *np,
 	struct mdss_dsi_ctrl_pdata *ctrl)
 {
@@ -1392,7 +1377,6 @@ static void mdss_dsi_parse_panel_horizintal_line_idle(struct device_node *np,
 	pr_debug("%s: horizontal_idle_cnt=%d\n", __func__,
 				ctrl->horizontal_idle_cnt);
 }
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 
 static int mdss_panel_parse_dt(struct device_node *np,
 			struct mdss_dsi_ctrl_pdata *ctrl_pdata)
@@ -1709,7 +1693,7 @@ static int mdss_panel_parse_dt(struct device_node *np,
 		pr_err("%s: failed to parse panel features\n", __func__);
 		goto error;
 	}
-<<<<<<< HEAD
+
 /* add delaytine-before-bl flag */
 #ifdef CONFIG_HUAWEI_LCD
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->dot_inversion_cmds,
@@ -1734,11 +1718,9 @@ static int mdss_panel_parse_dt(struct device_node *np,
 		"qcom,panel-inverse-off-cmds", "qcom,inverse-on-cmds-dsi-state");
 	mdss_panel_parse_esd_dt(np,ctrl_pdata);
 #endif
-=======
 
 	mdss_dsi_parse_panel_horizintal_line_idle(np, ctrl_pdata);
 
->>>>>>> 165d1a5... mdss: display: add support of dual dsi partial update.
 	return 0;
 
 error:
