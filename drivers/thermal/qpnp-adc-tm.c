@@ -1608,8 +1608,6 @@ fail:
 	if (adc_tm_high_enable || adc_tm_low_enable)
 		queue_work(chip->sensor[sensor_num].req_wq,
 				&chip->sensor[sensor_num].work);
-	if (rc < 0)
-		atomic_dec(&chip->wq_cnt);
 
 	return rc;
 }
